@@ -111,7 +111,6 @@ class FairLatentLoss(nn.Module):
     def loss_dg(self, z):
         """
         Diagonalizing Loss (L_dg) [cite: 164]
-        目标：使非对角元素趋于0，去相关。
         """
         C = self.compute_covariance(z)
         off_diag = C - C * self.I
@@ -125,9 +124,6 @@ class FairLatentLoss(nn.Module):
     def loss_di(self, z, labels, sensitives):
         """
         Distance Loss (L_di) [cite: 174]
-        目标：
-        1. 相同标签(Y)但不同敏感属性(S) -> 最小化距离 (Mask_max)
-        2. 相同敏感属性(S)但不同标签(Y) -> 最大化距离 (Mask_min)
         """
         batch_size = z.size(0)
 
@@ -165,7 +161,6 @@ class FairLatentLoss(nn.Module):
 
     def loss_hsic(self, z_y, z_s):
         """
-        最大化 Z_y 和 Z_s 的独立性 (最小化 HSIC 值)
         """
         n = z_y.size(0)
 
@@ -182,9 +177,6 @@ class FairLatentLoss(nn.Module):
 class FairINNModel(nn.Module):
     def __init__(self, input_dim, y_dim, s_dim):
         """
-        input_dim: 预训练嵌入的维度
-        y_dim: 分配给 Z^Y 的维度 [cite: 182]
-        s_dim: 分配给 Z^S 的维度
         """
         super().__init__()
         self.inn = INN_Node(input_dim)
@@ -233,7 +225,6 @@ class FairINNModel(nn.Module):
 
 
 class StructureMask(nn.Module):
-    """邻居掩码生成器：接受每条边的拼接输入，预测 mask 的 Logits"""
 
     def __init__(self, input_dim, hidden_dim, init_bias=3.0):
         super().__init__()
@@ -302,7 +293,6 @@ class FeatureMask(nn.Module):
 
 def supcon_loss(z, labels, temperature=0.07):
     """
-    真正的 Supervised Contrastive Loss (InfoNCE 变体)
     """
     z = F.normalize(z, dim=1)
 
@@ -388,8 +378,6 @@ class self_explainer(nn.Module):
 
     def generate_nearest_neighbor_counterfactual(self, z_s, z_y, sens, labels, train_mask):
         """
-        [极速版] 基于矩阵运算的最近邻反事实生成。
-        移除了所有 Python 循环，使用 torch.cdist 并行计算距离。
         """
         self.fairINN.eval()
 
@@ -907,7 +895,6 @@ class self_explainer(nn.Module):
 
     def weighted_contrastive_loss(self, q, k, weights, tau=0.1):
         """
-        [辅助方法] 加权对比损失 (Weighted InfoNCE Loss)
         q: Query Embedding (e.g., e_mask) [N, D]
         k: Key Embedding (e.g., e_origin) [N, D]
         weights: Sample weights [N]
@@ -930,9 +917,7 @@ class self_explainer(nn.Module):
     def compute_structure_mask_loss_contrastive(self, g, x, sens, train_mask, labels, mask_threshold=0.3, tau=1.0, eps=1e-6,
                                                 con_tau=0.1):
         """
-        基于对比学习 (Contrastive Learning) 的结构掩码损失计算
         Args:
-            con_tau: 对比学习的温度系数 (建议 0.07 ~ 0.2)
         """
         g = dgl.remove_self_loop(g)
         g = dgl.add_self_loop(g)
@@ -1025,9 +1010,7 @@ class self_explainer(nn.Module):
 
     def compute_feature_mask_loss_contrastive(self, g, x, sens, train_mask, labels, con_tau=0.5):
         """
-        基于对比学习 (Contrastive Learning) 的特征掩码损失计算
         Args:
-            con_tau: 对比学习的温度系数
         """
         e = self.encoder(g, x)
         e_detach = e.detach()
@@ -1081,9 +1064,7 @@ class self_explainer(nn.Module):
 
     def compute_feature_mask_loss_contrastive_ete(self, g, x, e, z_y, z_s, e_cf, R, sens, train_mask, labels, con_tau=0.5):
         """
-        基于对比学习 (Contrastive Learning) 的特征掩码损失计算
         Args:
-            con_tau: 对比学习的温度系数
         """
 
 
@@ -1137,9 +1118,7 @@ class self_explainer(nn.Module):
     def compute_structure_mask_loss_contrastive_ete(self, g, x, e, z_y, z_s, e_cf, R, sens, train_mask, labels, mask_threshold=0.3, tau=1.0, eps=1e-6,
                                                 con_tau=0.1):
         """
-        基于对比学习 (Contrastive Learning) 的结构掩码损失计算
         Args:
-            con_tau: 对比学习的温度系数 (建议 0.07 ~ 0.2)
         """
         g = dgl.remove_self_loop(g)
         g = dgl.add_self_loop(g)
@@ -1236,7 +1215,6 @@ class self_explainer(nn.Module):
             mask_threshold=0.3, min_feature_keep_ratio=0.05,
             max_feature_keep_ratio=None, max_structure_keep_ratio=None):
         """
-        Step 1: 模型推理 -> 生成 Soft Mask -> 截断为 Hard Mask
         """
         self.eval()
         g = dgl.remove_self_loop(g)
@@ -1348,7 +1326,6 @@ class self_explainer(nn.Module):
 
     def get_complement_masks(self, feat_mask, struct_mask, is_self_loop):
         """
-        Step 2: 输入解释掩码 -> 生成反向(补图)掩码
         """
         comp_feat_mask = 1.0 - feat_mask
 
@@ -1360,7 +1337,6 @@ class self_explainer(nn.Module):
 
     def get_explained_graph(self, g, x, feat_mask, struct_mask, train_mask):
         """
-        Step 3: 输入掩码 + 原数据 -> 构建物理子图对象 (DGLGraph) 和 掩码后特征
         """
         x_base = self.get_x_base(x, train_mask)
         x_new = feat_mask * x + (1.0 - feat_mask) * x_base
@@ -1393,15 +1369,7 @@ class self_explainer(nn.Module):
             eps=1e-6,
     ):
         """
-        推理/解释阶段：生成硬掩码，构建新图，进行预测。
 
-        与“新训练代码”保持一致的关键点：
-        1) 训练中对结构掩码使用 hard=eps/1 来满足 APPNPConv(norm="both") 对 edge_weight>0 的要求；
-        2) 推理阶段你现在是“物理删边 + 重建自环”，这本身不会触发 edge_weight>0 的报错（因为不传 edge_weight）。
-           但为了与训练口径一致，我们：
-             - 仍然锁定自环为必保留（prob=1）
-             - kept_indices 基于 hard(0/1) 的阈值逻辑
-             - 额外返回结构的 hard mask（可选）以及 soft probs（可选）
         """
 
         self.eval()
@@ -1455,15 +1423,9 @@ class self_explainer(nn.Module):
     @torch.no_grad()
     def compute_flip_and_consistency(self, z_y, z_s, z_s_cf, sens, labels, thr_logit=0.0):
         """
-        model: 你的 FairINNModel (含 classifier_y / classifier_s)
-        z_y, z_s: 原表示 [N, y_dim], [N, s_dim]
-        z_y_cf, z_s_cf: 反事实表示 [N, y_dim], [N, s_dim]
-        thr_logit: logit 阈值，二分类默认 0.0
 
-        返回:
           flip_rate_s: scalar
           consistency_y: scalar
-          以及一些可选的诊断量
         """
         w = self.fairINN.classifier_s.weight.data
         b = self.fairINN.classifier_s.bias.data
