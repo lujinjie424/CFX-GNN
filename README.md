@@ -64,7 +64,7 @@ Check the pipeline with one seed and one epoch per stage:
 python run.py --dataset bail --smoke-test
 ```
 
-Run the default five seeds for one dataset:
+Run five consecutive rounds with seeds `1,2,3,4,5`:
 
 ```bash
 python run.py --dataset bail
@@ -100,7 +100,7 @@ main utility and fairness evaluation.
 ## Default configurations
 
 The release freezes one numerical configuration per dataset under `configs/`
-using seeds `1,2,3,10,11`. Bail uses GCN; Pokec-n and Pokec-z use APPNP. Method
+using the fixed consecutive seeds `1,2,3,4,5`. Bail uses GCN; Pokec-n and Pokec-z use APPNP. Method
 choices are not configurable: local quantile matching, orthogonal separation,
 the bias/clean mask semantics, representation reduction, and clean-head-only
 refinement are fixed in code. YAML files contain only dataset-specific
@@ -121,8 +121,8 @@ run.py                public experiment entry point
 
 - Each run prints per-seed metrics and an aggregate structured summary.
 - DGL/CUDA graph kernels may not be bitwise deterministic on every platform.
-- Report the complete predefined seed set rather than selecting favorable
-  seeds after execution.
+- Every regular invocation starts at seed 1 and increments it once per round
+  for five rounds; arbitrary seed lists are not accepted.
 - `mask_feature_budget` and `mask_structure_budget` denote retained ratios of
   the bias mask; Clean uses the complement.
 

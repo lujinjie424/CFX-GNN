@@ -1,6 +1,5 @@
 dataset: toy
 encoder: gcn
-seeds: [1]
 lr: 0.003
 hidden_dim: 32
 pre_epochs: 30

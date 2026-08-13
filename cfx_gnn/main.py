@@ -38,13 +38,7 @@ def parse_args():
         help="optional dataset-cache directory override",
     )
     parser.add_argument("--gpu", type=int, default=0, help="gpu id")
-    parser.add_argument("--num_seeds", type=int, default=5, help="number of random seeds")
-    parser.add_argument(
-        "--seeds",
-        type=str,
-        default="1,2,3,10,11",
-        help="comma-separated seed list, e.g., 1,2,3,10,11",
-    )
+    parser.add_argument("--smoke_test", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--lr", type=float, default=0.01, help="learning rate")
     parser.add_argument(
         "--lambda_cons",
@@ -627,18 +621,13 @@ def setup_seed(seed):
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
+
+
+def experiment_seeds(smoke_test=False):
+    return [1] if smoke_test else list(range(1, 6))
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     dgl.seed(seed)
-
-
-def parse_seed_list(args):
-    seeds = [int(seed.strip()) for seed in args.seeds.split(",") if seed.strip()]
-    if len(seeds) < args.num_seeds:
-        raise ValueError(
-            f"--num_seeds={args.num_seeds} but --seeds only provides {len(seeds)} seeds: {seeds}"
-        )
-    return seeds[: args.num_seeds]
 
 
 def summarize_array(values):
@@ -734,22 +723,23 @@ def main():
     if torch.cuda.is_available():
         run_env["cuda_device_name"] = torch.cuda.get_device_name(torch.cuda.current_device())
     print(f"Run environment: {run_env}")
-    seeds = parse_seed_list(args)
+    seeds = experiment_seeds(args.smoke_test)
+    num_runs = len(seeds)
     run_results = []
 
-    total_acc, total_f1, total_auc_roc, total_parity, total_equality = [np.zeros(args.num_seeds) for _ in range(5)]
+    total_acc, total_f1, total_auc_roc, total_parity, total_equality = [np.zeros(num_runs) for _ in range(5)]
     total_acc_origin, total_f1_origin, total_auc_roc_origin, total_parity_origin, total_equality_origin = [
-        np.zeros(args.num_seeds) for _ in range(5)
+        np.zeros(num_runs) for _ in range(5)
     ]
     total_acc_comp, total_f1_comp, total_auc_roc_comp, total_parity_comp, total_equality_comp = [
-        np.zeros(args.num_seeds) for _ in range(5)
+        np.zeros(num_runs) for _ in range(5)
     ]
     total_original_us, total_explain_us, total_comp_us, total_original_flip, total_explain_flip, total_comp_flip = [
-        np.zeros(args.num_seeds) for _ in range(6)
+        np.zeros(num_runs) for _ in range(6)
     ]
-    Fid_plus_flip, Fid_minus_flip, Fid_plus_prob, Fid_minus_prob = [np.zeros(args.num_seeds) for _ in range(4)]
+    Fid_plus_flip, Fid_minus_flip, Fid_plus_prob, Fid_minus_prob = [np.zeros(num_runs) for _ in range(4)]
     CF_fid_plus_prob, CF_fid_minus_prob, CF_fid_plus_flip, CF_fid_minus_flip = [
-        np.zeros(args.num_seeds) for _ in range(4)
+        np.zeros(num_runs) for _ in range(4)
     ]
 
     for count, seed in enumerate(seeds):
