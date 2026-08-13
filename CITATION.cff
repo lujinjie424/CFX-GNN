@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the CFX-GNN paper."
+title: "CFX-GNN: Counterfactual Fairness Explanation for Graph Neural Networks"
+type: software
+authors:
+  - name: "CFX-GNN Authors"
+version: 0.1.0
+date-released: 2026-08-13
+license: MIT

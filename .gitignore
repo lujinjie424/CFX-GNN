@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.idea/
+.vscode/
+checkpoints/
+result/
+results/
+result_toy_*/
+*.pt
+*.pth
+*.log
+cfx_gnn/dataset/**/*.bin
+cfx_gnn/dataset/**/*.npz
+!cfx_gnn/dataset/**/README.md
+!cfx_gnn/dataset/toy/*.bin
