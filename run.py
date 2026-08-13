@@ -10,8 +10,6 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent
 
-# These assertions document the method fixed internally by cfx_gnn/main.py.
-# They are deliberately absent from dataset YAML files.
 PAPER_METHOD = {
     "cf_ref_mode": "local_quantile",
     "stage1_map_loss": "none",
@@ -45,7 +43,7 @@ def validate_data(dataset):
         )
 
 
-def build_command(dataset, gpu, seeds, smoke_test=False):
+def build_command(dataset, gpu, smoke_test=False):
     config = yaml.safe_load((ROOT / "configs" / f"{dataset}.yaml").read_text(encoding="utf-8"))
     forbidden = sorted(PAPER_METHOD.keys() & config.keys())
     if forbidden:
@@ -53,19 +51,15 @@ def build_command(dataset, gpu, seeds, smoke_test=False):
             "Paper method fields must not be selectable in dataset configs: "
             + ", ".join(forbidden)
         )
-    configured_seeds = config.pop("seeds")
-    seed_text = seeds or ",".join(map(str, configured_seeds))
     command = [sys.executable, str(ROOT / "cfx_gnn" / "main.py"),
-        "--method", "cf_risk_self_explainer", "--seeds", seed_text,
-        "--num_seeds", str(len(seed_text.split(","))), "--gpu", str(gpu),
+        "--method", "cf_risk_self_explainer", "--gpu", str(gpu),
         "--ckpt_dir", str((ROOT / "checkpoints" / dataset).resolve())]
     for key, value in config.items():
         if isinstance(value, bool):
             if value: command.append(f"--{key}")
         elif value is not None: command.extend((f"--{key}", str(value)))
     if smoke_test:
-        command[command.index("--seeds") + 1] = seed_text.split(",")[0]
-        command[command.index("--num_seeds") + 1] = "1"
+        command.append("--smoke_test")
         for key in ("pre_epochs", "epochs", "cf_warm_epochs", "cf_exp_epochs", "cf_joint_epochs"):
             flag = f"--{key}"; command[command.index(flag) + 1] = "1"
     return command
@@ -75,11 +69,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", choices=("bail", "pokec_n", "pokec_z", "toy"), required=True)
     parser.add_argument("--gpu", type=int, default=0)
-    parser.add_argument("--seeds", help="comma-separated seed override")
     parser.add_argument("--smoke-test", action="store_true")
     args = parser.parse_args()
     validate_data(args.dataset)
-    subprocess.run(build_command(args.dataset, args.gpu, args.seeds, args.smoke_test),
+    subprocess.run(build_command(args.dataset, args.gpu, args.smoke_test),
                    cwd=ROOT / "cfx_gnn", check=True)
 
 

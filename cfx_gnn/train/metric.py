@@ -11,8 +11,8 @@ def accuracy(y_pred, y_true):
     Returns:
         acc (float): 正确预测的比例
     """
-    correct = y_pred.eq(y_true).double()  # 计算正确预测数
-    return correct.sum().item() / len(y_true)  # 计算准确率
+    correct = y_pred.eq(y_true).double()
+    return correct.sum().item() / len(y_true)
 
 def fair_metric(pred, labels, sens):
     idx_s0 = sens == 0
@@ -23,9 +23,6 @@ def fair_metric(pred, labels, sens):
                  sum(pred[idx_s1]) / sum(idx_s1))
     equality = abs(sum(pred[idx_s0_y1]) / sum(idx_s0_y1) -
                    sum(pred[idx_s1_y1]) / sum(idx_s1_y1))
-    # df = float('inf')
-    # if sum(pred[idx_s0])/sum(idx_s0) != 0 and sum(pred[idx_s1])/sum(idx_s1) != 0:
-    #     df = math.log(max(sum(pred[idx_s0])/sum(idx_s0), sum(pred[idx_s1])/sum(idx_s1))) - math.log(min(sum(pred[idx_s0])/sum(idx_s0), sum(pred[idx_s1])/sum(idx_s1)))
 
     return parity.item(), equality.item()
 

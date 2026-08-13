@@ -49,7 +49,6 @@ def generate_toy_dataset(output_dir, num_nodes=600, seed=2027):
     graph = dgl.add_self_loop(graph)
     graph.ndata["nfeat"] = torch.from_numpy(features)
 
-    # Stratified round-robin assignment keeps every split populated by all (y, s) groups.
     train, valid, test = [], [], []
     for y in (0, 1):
         for s in (0, 1):

@@ -14,7 +14,7 @@ def compute_cf_risk(logits, logits_cf_set, mode="mean_logit_gap", var_gamma=0.0)
         logits = logits.unsqueeze(-1)
     if logits_cf_set.dim() == 2:
         logits_cf_set = logits_cf_set.unsqueeze(-1)
-    gap = torch.abs(logits_cf_set - logits.unsqueeze(1)).mean(dim=-1)  # [N, K]
+    gap = torch.abs(logits_cf_set - logits.unsqueeze(1)).mean(dim=-1)
     if mode == "mean_logit_gap":
         return gap.mean(dim=1)
     if mode == "mean_var_logit_gap":

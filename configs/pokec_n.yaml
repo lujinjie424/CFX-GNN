@@ -1,6 +1,5 @@
 dataset: pokec_n
 encoder: appnp
-seeds: [1, 2, 3, 10, 11]
 lr: 0.005
 hidden_dim: 64
 pre_epochs: 200

@@ -2317,8 +2317,6 @@ def train(cfg):
         exp_metric = metric.evaluate(logits_exp[test_mask], labels[test_mask], sens[test_mask], logits_exp_cf_set.mean(dim=1)[test_mask])
         comp_metric = metric.evaluate(logits_comp[test_mask], labels[test_mask], sens[test_mask], logits_comp_cf_set.mean(dim=1)[test_mask])
 
-        # External NIFTY-style intervention: flip the raw sensitive feature while
-        # keeping the learned explanation masks fixed.
         external_cf = {}
         if sens_index is not None:
             features_sensitive_cf = features.clone()
@@ -2376,9 +2374,6 @@ def train(cfg):
         feature_comp, structure_comp, is_self_loop, sens_index
     )
 
-    # Manuscript RQ2 metrics. d_cf follows Eq. (24): mean L2 distance
-    # normalized by sqrt(embedding dimension). Fidelity follows Eq. (25):
-    # hard-label agreement with the full graph (not disagreement/Fid+).
     embedding_scale = float(max(h_full.shape[1], 1)) ** 0.5
     clean_fidelity = float((pred_comp == pred_full).float().mean().item())
     bias_fidelity = float((pred_exp == pred_full).float().mean().item())
